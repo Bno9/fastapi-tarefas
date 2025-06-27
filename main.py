@@ -32,16 +32,16 @@ def get_tarefas():
     
 @app.put("/atualizar")
 def put_tarefas(tarefas:Tarefa):
-    if tarefas.Tarefa in DB_Tarefas:
+    if tarefas.Tarefa in DB_Tarefas and tarefas.Concluida != DB_Tarefas[tarefas.Tarefa].Concluida:
         DB_Tarefas[tarefas.Tarefa].Concluida = tarefas.Concluida
         return {"message":"Tarefa atualizada com sucesso"}
     else:
-        return {"message":"Tarefa não existe no banco de dados"}
+        raise HTTPException(status_code=400, detail="Tarefa não existe ou já está com esse status.")
     
 @app.delete("/deletar/{nome_tarefa}")
 def delete_tarefas(nome_tarefa: str):
     if nome_tarefa not in DB_Tarefas:
-        raise {"message":"Essa tarefa não existe"}
+        raise HTTPException(status_code=400, detail="Essa tarefa não existe")
     else:
         del DB_Tarefas[nome_tarefa]
         return {"message": "Tarefa removida com sucesso"}
