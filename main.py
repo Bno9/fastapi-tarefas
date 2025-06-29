@@ -41,11 +41,31 @@ def post_tarefas(tarefas:Tarefa, credentials: HTTPBasicCredentials = Depends(aut
 
 @app.get("/tarefas")
 def get_tarefas(page: int = 1, limit: int = 10, credentials: HTTPBasicCredentials = Depends(autenticar_usuario)):
-    if not DB_Tarefas:
-        raise HTTPException(status_code=400, detail="Banco de dados vazio")
-    else:
-        return DB_Tarefas
+    if page < 1 or limit < 1:
+        raise HTTPException(status_code=400, detail="Page ou limit com valores inválidos")
     
+    if not DB_Tarefas:
+        return {"message": "Não existe nenhuma tarefa"}
+    
+    tarefas_ordenadas = sorted(DB_Tarefas.items(), key=lambda x: x[0] )
+    
+    start = (page - 1) * limit
+    end = start + limit
+
+    tarefas_paginadas = [
+        {"nome_tarefa": Tarefa_nome,
+        "descrição_tarefa": Tarefa_data.Descricao,
+        "concluida": Tarefa_data.Concluida}
+        for Tarefa_nome, Tarefa_data in tarefas_ordenadas[start:end]
+    ]
+    
+    return{
+        "page": page,
+        "limit": limit,
+        "total": len(DB_Tarefas),
+        "tarefas": tarefas_paginadas
+        }
+
 @app.put("/atualizar")
 def put_tarefas(tarefas:Tarefa, credentials: HTTPBasicCredentials = Depends(autenticar_usuario)):
     if tarefas.Tarefa in DB_Tarefas and tarefas.Concluida != DB_Tarefas[tarefas.Tarefa].Concluida:
