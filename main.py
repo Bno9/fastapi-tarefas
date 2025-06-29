@@ -40,17 +40,20 @@ def post_tarefas(tarefas:Tarefa, credentials: HTTPBasicCredentials = Depends(aut
         return {"message": "Tarefa adicionada"}
 
 @app.get("/tarefas")
-def get_tarefas(page: int = 1, limit: int = 10, credentials: HTTPBasicCredentials = Depends(autenticar_usuario)):
-    if page < 1 or limit < 1:
+def get_tarefas(ordem: int = 0, page: int = 1, size: int = 10, credentials: HTTPBasicCredentials = Depends(autenticar_usuario)):
+    if page < 1 or size < 1:
         raise HTTPException(status_code=400, detail="Page ou limit com valores inválidos")
     
     if not DB_Tarefas:
         return {"message": "Não existe nenhuma tarefa"}
     
-    tarefas_ordenadas = sorted(DB_Tarefas.items(), key=lambda x: x[0] )
+    if ordem == 1:
+        tarefas_ordenadas = sorted(DB_Tarefas.items(), key=lambda x: x[1].Descricao)
+    else:
+        tarefas_ordenadas = sorted(DB_Tarefas.items(), key=lambda x: x[0])
     
-    start = (page - 1) * limit
-    end = start + limit
+    start = (page - 1) * size
+    end = start + size
 
     tarefas_paginadas = [
         {"nome_tarefa": Tarefa_nome,
@@ -61,9 +64,10 @@ def get_tarefas(page: int = 1, limit: int = 10, credentials: HTTPBasicCredential
     
     return{
         "page": page,
-        "limit": limit,
+        "size": size,
         "total": len(DB_Tarefas),
-        "tarefas": tarefas_paginadas
+        "tarefas": tarefas_paginadas,
+        "message": "Se desejar a ordenação por descrição, coloque ordem = 1 na query string"
         }
 
 @app.put("/atualizar")
